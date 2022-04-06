@@ -87,6 +87,9 @@ export default {
   },
   mounted() {
     TutorialDataService.getAll().on("value", this.onDataChange);
+    this.axios.get("https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=1&page_size=10&search_token_name=&search_token_tag=").then((response) => {
+      console.log(response.data)
+    })
   },
   beforeUnmount() {
     TutorialDataService.getAll().off("value", this.onDataChange);

@@ -1,0 +1,200 @@
+<template>
+  <button type="button" class="btn btn-primary mr-3" @click="sortData()">
+    SORT
+  </button>
+  <button type="button" class="btn btn-info mr-3" @click="sortOrigin()">
+    ORIGIN
+  </button>
+  <div class="list-group row">
+    <span
+      v-for="(coin, index) in coins"
+      :key="index"
+      href="#"
+      class="list-group-item flex-column align-items-start col-md-4"
+    >
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">{{ coin.name }}</h5>
+        <small class="font-bold">{{
+          new Date(coin.discovered_on * 1000).toLocaleString("en-GB")
+        }}</small>
+      </div>
+      <p class="mb-1">
+        <img :src="coin.logo_url" class="img-coin" />
+        {{ coin.symbol }}
+        <span class="badge badge-warning" v-if="isAvailableBinance(coin.symbol)"
+          >Binance</span
+        >
+        <span class="badge badge-info" v-if="isAvailableBinance(coin.symbol)">{{
+          getPrice((coin.symbol))
+        }}</span>
+      </p>
+    </span>
+  </div>
+</template>
+
+<script>
+import TrendingSoon from "../services/TrendingSoon";
+
+export default {
+  name: "trending-soon",
+  data() {
+    return {
+      coins: [],
+      currentTutorial: null,
+      currentIndex: -1,
+      toggleSort: true,
+      firebaseData: [],
+      binanceData: [],
+    };
+  },
+  methods: {
+    getData(items) {
+      items.forEach((item) => {
+        this.coins.push(item);
+      });
+    },
+
+    onDataChange(items) {
+      let _firebaseData = [];
+
+      items.forEach((item) => {
+        let data = item.val();
+        _firebaseData.push(data);
+      });
+      console.log(_firebaseData);
+
+      this.firebaseData = _firebaseData;
+    },
+
+    compare(a, b) {
+      if (a.discovered_on < b.discovered_on) {
+        return -1;
+      }
+      if (a.discovered_on > b.discovered_on) {
+        return 1;
+      }
+      return 0;
+    },
+    compareReverse(b, a) {
+      if (a.discovered_on < b.discovered_on) {
+        return -1;
+      }
+      if (a.discovered_on > b.discovered_on) {
+        return 1;
+      }
+      return 0;
+    },
+
+    compareRank(a, b) {
+      if (a.rank < b.rank) {
+        return -1;
+      }
+      if (a.rank > b.rank) {
+        return 1;
+      }
+      return 0;
+    },
+
+    pushData() {
+      this.coins.forEach((coin) => {
+        if (
+          this.firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1
+        ) {
+          console.log(coin);
+          TrendingSoon.create(coin);
+        }
+      });
+    },
+    sortData() {
+      if (this.toggleSort) {
+        this.coins = this.coins.sort(this.compare);
+        this.toggleSort = false;
+      } else {
+        this.coins = this.coins.sort(this.compareReverse);
+        this.toggleSort = true;
+      }
+    },
+
+    sortOrigin() {
+      this.coins = this.coins.sort(this.compareRank);
+    },
+
+    isAvailableBinance(coinName) {
+      return (
+        this.binanceData.findIndex((ele) => ele.symbol.includes(coinName)) > -1
+      );
+    },
+    getPrice(coinName) {
+      if (this.binanceData.findIndex((ele) => ele.symbol.includes(coinName + 'USD')) > -1)
+        return (
+          this.binanceData.find((ele) => ele.symbol.includes(coinName + 'USD')).price
+        );
+      return false
+    }
+  },
+  async mounted() {
+    await TrendingSoon.getAll().on("value", this.onDataChange);
+    await this.axios
+      .get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=0&page_size=10&search_token_name=&search_token_tag="
+      )
+      .then((response) => {
+        this.getData(response.data.data.tokens);
+      });
+    await this.axios
+      .get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=1&page_size=10&search_token_name=&search_token_tag="
+      )
+      .then((response) => {
+        this.getData(response.data.data.tokens);
+      });
+    await this.axios
+      .get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=2&page_size=10&search_token_name=&search_token_tag="
+      )
+      .then((response) => {
+        this.getData(response.data.data.tokens);
+      });
+    await this.axios
+      .get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=3&page_size=10&search_token_name=&search_token_tag="
+      )
+      .then((response) => {
+        this.getData(response.data.data.tokens);
+      });
+    await this.axios
+      .get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=4&page_size=10&search_token_name=&search_token_tag="
+      )
+      .then((response) => {
+        this.getData(response.data.data.tokens);
+      });
+    await this.pushData();
+    await this.axios
+      .get("https://api.binance.com/api/v3/ticker/price")
+      .then((response) => {
+        console.log(response.data);
+        this.binanceData = response.data;
+      });
+  },
+  beforeUnmount() {
+    TrendingSoon.getAll().off("value", this.onDataChange);
+  },
+};
+</script>
+
+<style>
+.list {
+  text-align: left;
+  max-width: 750px;
+  margin: auto;
+}
+.img-coin {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+.font-bold {
+  font-weight: bold;
+}
+</style>
