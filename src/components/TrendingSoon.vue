@@ -11,6 +11,7 @@
       :key="index"
       href="#"
       class="list-group-item flex-column align-items-start col-md-4"
+      @click="copyText(coin.symbol)"
     >
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1">{{ coin.name }}</h5>
@@ -25,7 +26,7 @@
           >Binance</span
         >
         <span class="badge badge-info" v-if="isAvailableBinance(coin.symbol)">{{
-          getPrice((coin.symbol))
+          getPrice(coin.symbol)
         }}</span>
       </p>
     </span>
@@ -48,6 +49,18 @@ export default {
     };
   },
   methods: {
+    copyText(text) {
+      if (!navigator.clipboard) {
+        const dummy = document.createElement("textarea");
+        document.body.appendChild(dummy);
+        dummy.value = text+"USDT";
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+      } else {
+        navigator.clipboard.writeText(text+"USDT");
+      }
+    },
     getData(items) {
       items.forEach((item) => {
         this.coins.push(item);
@@ -125,12 +138,16 @@ export default {
       );
     },
     getPrice(coinName) {
-      if (this.binanceData.findIndex((ele) => ele.symbol.includes(coinName + 'USD')) > -1)
-        return (
-          this.binanceData.find((ele) => ele.symbol.includes(coinName + 'USD')).price
-        );
-      return false
-    }
+      if (
+        this.binanceData.findIndex((ele) =>
+          ele.symbol.includes(coinName + "USD")
+        ) > -1
+      )
+        return this.binanceData.find((ele) =>
+          ele.symbol.includes(coinName + "USD")
+        ).price;
+      return false;
+    },
   },
   async mounted() {
     await TrendingSoon.getAll().on("value", this.onDataChange);
