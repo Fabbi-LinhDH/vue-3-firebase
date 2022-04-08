@@ -11,10 +11,11 @@
       :key="index"
       href="#"
       class="list-group-item flex-column align-items-start col-md-4"
-      @click="copyText(coin.symbol)"
     >
       <div class="d-flex w-100 justify-content-between">
-        <h5 class="mb-1">{{ coin.name }}</h5>
+        <h5 class="mb-1">
+          <span class="mr-1">{{ coin.rank }}.</span>{{ coin.name }}
+        </h5>
         <small class="font-bold">{{
           new Date(coin.discovered_on * 1000).toLocaleString("en-GB")
         }}</small>
@@ -22,12 +23,18 @@
       <p class="mb-1">
         <img :src="coin.logo_url" class="img-coin" />
         {{ coin.symbol }}
-        <span class="badge badge-warning" v-if="isAvailableBinance(coin.symbol)"
+        <span
+          class="badge badge-warning"
+          v-if="isAvailableBinance(coin.symbol)"
+          @click="copyText(coin.symbol)"
           >Binance</span
         >
-        <span class="badge badge-info" v-if="isAvailableBinance(coin.symbol)">{{
+        <a class="badge badge-info" v-if="isAvailableBinance(coin.symbol)"
+          :href="getTradingviewUrl(coin.symbol)"
+            target="_blank"
+        >{{
           getPrice(coin.symbol)
-        }}</span>
+        }}</a>
       </p>
     </span>
   </div>
@@ -36,6 +43,7 @@
 <script>
 import TrendingSoon from "../services/TrendingSoon";
 
+const TRADINGVIEW_URL = 'https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A'
 export default {
   name: "trending-soon",
   data() {
@@ -53,18 +61,23 @@ export default {
       if (!navigator.clipboard) {
         const dummy = document.createElement("textarea");
         document.body.appendChild(dummy);
-        dummy.value = text+"USDT";
+        dummy.value = text + "USDT";
         dummy.select();
         document.execCommand("copy");
         document.body.removeChild(dummy);
       } else {
-        navigator.clipboard.writeText(text+"USDT");
+        navigator.clipboard.writeText(text + "USDT");
       }
     },
     getData(items) {
-      items.forEach((item) => {
-        this.coins.push(item);
-      });
+      this.coins = [...this.coins, ...items];
+      // items.forEach((item) => {
+      //   this.coins.push(item);
+      // });
+    },
+
+    getTradingviewUrl(coinName) {
+      return TRADINGVIEW_URL + coinName + 'USDT'
     },
 
     onDataChange(items) {
@@ -145,8 +158,8 @@ export default {
       )
         return this.binanceData.find((ele) =>
           ele.symbol.includes(coinName + "USD")
-        ).price;
-      return false;
+        ).price + '$';
+      return 'NULL';
     },
   },
   async mounted() {
