@@ -10,19 +10,19 @@
     :width="width"
     :height="height"
   />
-  <button type="button" class="btn btn-primary mr-3" @click="type = 'DAY' ">
+  <button type="button" :class="type == 'DAY'?'btn btn-primary mr-3' : 'btn btn-info mr-3'" @click="type = 'DAY' ">
     DAY
   </button>
-  <button type="button" class="btn btn-info mr-3" @click="type = '4H'">
+  <button type="button" :class="type == '4H'?'btn btn-primary mr-3' : 'btn btn-info mr-3'" @click="type = '4H'">
     4H
   </button>
-  <button type="button" class="btn btn-info mr-3" @click="type = '1H'">
+  <button type="button" :class="type == '1H'?'btn btn-primary mr-3' : 'btn btn-info mr-3'" @click="type = '1H'">
     1H
   </button>
-  <button type="button" class="btn btn-info mr-3" @click="type = '15M'">
+  <button type="button" :class="type == '15M'?'btn btn-primary mr-3' : 'btn btn-info mr-3'" @click="type = '15M'">
     15M
   </button>
-  <button type="button" class="btn btn-info mr-3" @click="type = '5M'">
+  <button type="button" :class="type == '5M'?'btn btn-primary mr-3' : 'btn btn-info mr-3'" @click="type = '5M'">
     5m
   </button>
 </template>
@@ -164,11 +164,11 @@ export default {
   mounted() {
     this.dataFetch = this.fetchData().then(res => {
     
-      this.dataDay = res.dataDay.data.slice(res.dataDay.data.length - 7)
-      this.data4H = res.data4H.data.slice(res.dataDay.data.length - 15)
-      this.data1H = res.data1H.data.slice(res.dataDay.data.length - 15)
-      this.data15M = res.data15M.data.slice(res.dataDay.data.length - 15)
-      this.data5M = res.data5M.data.slice(res.dataDay.data.length - 15)
+      this.dataDay = res.dataDay.data.slice(res.dataDay.data.length - 7, res.dataDay.data.length)
+      this.data4H = res.data4H.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
+      this.data1H = res.data1H.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
+      this.data15M = res.data15M.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
+      this.data5M = res.data5M.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
       console.log(this.dataDay)
       
       this.chartData.labels = this.dataDay.map(ele => {
