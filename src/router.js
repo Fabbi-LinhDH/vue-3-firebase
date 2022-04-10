@@ -8,6 +8,12 @@ const routes =  [
     component: () => import("./components/TrendingSoon")
   },
   {
+    path: "/show",
+    alias: "/show",
+    name: "show",
+    component: () => import("./components/Show")
+  },
+  {
     path: "/add",
     name: "add",
     component: () => import("./components/AddTutorial")

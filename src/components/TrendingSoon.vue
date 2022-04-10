@@ -29,12 +29,16 @@
           @click="copyText(coin.symbol)"
           >Binance</span
         >
-        <a class="badge badge-info" v-if="isAvailableBinance(coin.symbol)"
+        <a
+          class="badge badge-info"
+          v-if="isAvailableBinance(coin.symbol)"
           :href="getTradingviewUrl(coin.symbol)"
-            target="_blank"
-        >{{
-          getPrice(coin.symbol)
-        }}</a>
+          target="_blank"
+
+          >{{ getPrice(coin.symbol) }}</a
+        >
+        <router-link :to="{ name: 'show', params: { symbol: coin.symbol+'USDT' }}">show</router-link>
+
       </p>
     </span>
   </div>
@@ -43,7 +47,8 @@
 <script>
 import TrendingSoon from "../services/TrendingSoon";
 
-const TRADINGVIEW_URL = 'https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A'
+const TRADINGVIEW_URL =
+  "https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A";
 export default {
   name: "trending-soon",
   data() {
@@ -69,7 +74,7 @@ export default {
         navigator.clipboard.writeText(text + "USDT");
       }
     },
-    getData(items) {
+    getData(...items) {
       this.coins = [...this.coins, ...items];
       // items.forEach((item) => {
       //   this.coins.push(item);
@@ -77,18 +82,25 @@ export default {
     },
 
     getTradingviewUrl(coinName) {
-      return TRADINGVIEW_URL + coinName + 'USDT'
+      return TRADINGVIEW_URL + coinName + "USDT";
     },
 
-    onDataChange(items) {
+    async onDataChange(items) {
       let _firebaseData = [];
-
+      this.coins = await this.getTrendingSoon()
       items.forEach((item) => {
         let data = item.val();
         _firebaseData.push(data);
       });
-      console.log(_firebaseData);
-
+      this.coins.forEach((coin) => {
+        if (
+          _firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1
+        ) {
+          console.log(coin);
+          TrendingSoon.create(coin);
+        }
+      });
+      console.log("_firebaseData:" + _firebaseData.length);
       this.firebaseData = _firebaseData;
     },
 
@@ -127,7 +139,7 @@ export default {
           this.firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1
         ) {
           console.log(coin);
-          TrendingSoon.create(coin);
+          // TrendingSoon.create(coin);
         }
       });
     },
@@ -156,54 +168,72 @@ export default {
           ele.symbol.includes(coinName + "USD")
         ) > -1
       )
-        return this.binanceData.find((ele) =>
-          ele.symbol.includes(coinName + "USD")
-        ).price + '$';
-      return 'NULL';
+        return (
+          this.binanceData.find((ele) => ele.symbol.includes(coinName + "USD"))
+            .price + "$"
+        );
+      return "NULL";
     },
+
+    getTrendingSoon1() {
+      return this.axios.get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=0&page_size=10&search_token_name=&search_token_tag="
+      );
+    },
+    getTrendingSoon2() {
+      return this.axios.get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=1&page_size=10&search_token_name=&search_token_tag="
+      );
+    },
+    getTrendingSoon3() {
+      return this.axios.get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=2&page_size=10&search_token_name=&search_token_tag="
+      );
+    },
+    getTrendingSoon4() {
+      return this.axios.get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=3&page_size=10&search_token_name=&search_token_tag="
+      );
+    },
+    getTrendingSoon5() {
+      return this.axios.get(
+        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=4&page_size=10&search_token_name=&search_token_tag="
+      );
+    },
+    async getTrendingSoon() {
+      let promises = [];
+      promises.push(this.getTrendingSoon1());
+      promises.push(this.getTrendingSoon2());
+      promises.push(this.getTrendingSoon3());
+      promises.push(this.getTrendingSoon4());
+      promises.push(this.getTrendingSoon5());
+      let [
+        trendingSoon1,
+        trendingSoon2,
+        trendingSoon3,
+        trendingSoon4,
+        trendingSoon5,
+      ] = await Promise.all(promises);
+      return [
+        ...trendingSoon1.data.data.tokens,
+        ...trendingSoon2.data.data.tokens,
+        ...trendingSoon3.data.data.tokens,
+        ...trendingSoon4.data.data.tokens,
+        ...trendingSoon5.data.data.tokens,
+      ];
+    },
+    getFirebaseData() {
+      return TrendingSoon.getAll().on("value", items => items);
+    }
   },
   async mounted() {
     await TrendingSoon.getAll().on("value", this.onDataChange);
-    await this.axios
-      .get(
-        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=0&page_size=10&search_token_name=&search_token_tag="
-      )
-      .then((response) => {
-        this.getData(response.data.data.tokens);
-      });
-    await this.axios
-      .get(
-        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=1&page_size=10&search_token_name=&search_token_tag="
-      )
-      .then((response) => {
-        this.getData(response.data.data.tokens);
-      });
-    await this.axios
-      .get(
-        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=2&page_size=10&search_token_name=&search_token_tag="
-      )
-      .then((response) => {
-        this.getData(response.data.data.tokens);
-      });
-    await this.axios
-      .get(
-        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=3&page_size=10&search_token_name=&search_token_tag="
-      )
-      .then((response) => {
-        this.getData(response.data.data.tokens);
-      });
-    await this.axios
-      .get(
-        "https://truesight.kyberswap.com/api/v1/trending-soon?timeframe=24h&page_number=4&page_size=10&search_token_name=&search_token_tag="
-      )
-      .then((response) => {
-        this.getData(response.data.data.tokens);
-      });
+
+
     await this.pushData();
     await this.axios
       .get("https://api.binance.com/api/v3/ticker/price")
       .then((response) => {
-        console.log(response.data);
         this.binanceData = response.data;
       });
   },
