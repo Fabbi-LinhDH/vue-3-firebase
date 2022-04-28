@@ -5,6 +5,35 @@
   <button type="button" class="btn btn-info mr-3" @click="sortOrigin()">
     ORIGIN
   </button>
+
+  <!-- Modal -->
+  <div
+    v-if="show"
+    class="modal fade show"
+    tabindex="-1"
+    role="dialog"
+    :style="show ? 'display: block' : 'display: none'"
+  >
+    <div class="modal-dialog modal-custom" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ symbol }}</h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+            @click="show = false"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <Show :symbol="symbol" />
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="list-group row">
     <span
       v-for="(coin, index) in coins"
@@ -23,22 +52,23 @@
       <p class="mb-1">
         <img :src="coin.logo_url" class="img-coin" />
         {{ coin.symbol }}
-        <span
-          class="badge badge-warning"
-          v-if="isAvailableBinance(coin.symbol)"
-          @click="copyText(coin.symbol)"
-          >Binance</span
-        >
-        <a
-          class="badge badge-info"
-          v-if="isAvailableBinance(coin.symbol)"
-          :href="getTradingviewUrl(coin.symbol)"
-          target="_blank"
-
-          >{{ getPrice(coin.symbol) }}</a
-        >
-        <router-link :to="{ name: 'show', params: { symbol: coin.symbol+'USDT' }}">show</router-link>
-
+        <template v-if="isAvailableBinance(coin.symbol)">
+          <span class="badge badge-warning mr-2" @click="copyText(coin.symbol)"
+            >Binance</span
+          >
+          <a
+            class="badge badge-info mr-2"
+            :href="getTradingviewUrl(coin.symbol)"
+            target="_blank"
+            >{{ getPrice(coin.symbol) }}</a
+          >
+          <span
+            class="badge badge-success"
+            @click="(show = true), (symbol = coin.symbol + 'USDT')"
+            >show</span
+          >
+          <!-- <router-link :to="{ name: 'show', params: { symbol: coin.symbol+'USDT' }}">show</router-link> -->
+        </template>
       </p>
     </span>
   </div>
@@ -46,11 +76,12 @@
 
 <script>
 import TrendingSoon from "../services/TrendingSoon";
-
+import Show from "./Show.vue";
 const TRADINGVIEW_URL =
   "https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A";
 export default {
   name: "trending-soon",
+  components: { Show },
   data() {
     return {
       coins: [],
@@ -59,6 +90,8 @@ export default {
       toggleSort: true,
       firebaseData: [],
       binanceData: [],
+      symbol: "",
+      show: false,
     };
   },
   methods: {
@@ -87,15 +120,13 @@ export default {
 
     async onDataChange(items) {
       let _firebaseData = [];
-      this.coins = await this.getTrendingSoon()
+      this.coins = await this.getTrendingSoon();
       items.forEach((item) => {
         let data = item.val();
         _firebaseData.push(data);
       });
       this.coins.forEach((coin) => {
-        if (
-          _firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1
-        ) {
+        if (_firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1) {
           console.log(coin);
           TrendingSoon.create(coin);
         }
@@ -223,12 +254,11 @@ export default {
       ];
     },
     getFirebaseData() {
-      return TrendingSoon.getAll().on("value", items => items);
-    }
+      return TrendingSoon.getAll().on("value", (items) => items);
+    },
   },
   async mounted() {
     await TrendingSoon.getAll().on("value", this.onDataChange);
-
 
     await this.pushData();
     await this.axios
@@ -256,5 +286,9 @@ export default {
 }
 .font-bold {
   font-weight: bold;
+}
+.modal-custom {
+  max-width: 100% !important;
+  width: 100% !important;
 }
 </style>

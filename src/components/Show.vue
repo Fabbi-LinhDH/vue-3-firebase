@@ -63,11 +63,15 @@ export default {
     plugins: {
       type: Array,
       default: () => []
-    }
+    },
+    symbol: {
+      default: 'BTCUSDT',
+      type: String
+    },
   },
   data() {
     return {
-      symbol: this.$route.params.symbol ? this.$route.params.symbol : 'BTCUSDT',
+      // symbol: this.$route.params.symbol ? this.$route.params.symbol : 'BTCUSDT',
       dataFetch: null,
       dataDay: null,
       data4H: null,
@@ -108,6 +112,7 @@ export default {
       return this.axios.get(`https://api.binance.com/api/v1/klines?symbol=${this.symbol}&interval=5m`)
     },
     async fetchData() {
+      console.log(this.symbol)
       let promises = [];
       promises.push(this.getByDay());
       promises.push(this.getBy4H());
@@ -128,20 +133,20 @@ export default {
       this.chartData.labels = data.map(ele => {
         var date = new Date(ele[0])
         if (type ==  '4H') {
-          return date.getDate() + '/' + date.getMonth() +' '+date.getHours() + ':00'
+          return date.getDate() + '/' + (date.getMonth()+1) +' '+date.getHours() + ':00'
         } else if (type ==  '1H') {
-          return date.getDate() + '/' + date.getMonth() +' '+date.getHours() + ':00'
+          return date.getDate() + '/' + (date.getMonth()+1) +' '+date.getHours() + ':00'
         } else if (type ==  '15M') {
-          return date.getDate() + '/' + date.getMonth() +' '+date.getHours() + ':' + date.getMinutes()
+          return date.getDate() + '/' + (date.getMonth()+1) +' '+date.getHours() + ':' + date.getMinutes()
         } else if (type ==  '5M') {
-          return date.getDate() + '/' + date.getMonth() +' '+date.getHours() + ':' + date.getMinutes()
+          return date.getDate() + '/' + (date.getMonth()+1) +' '+date.getHours() + ':' + date.getMinutes()
         }
         return date.getDate()
       })
       this.chartData.datasets = [{
         data : data.map(ele => ele[1]),
         backgroundColor: '#f87979',
-        label: this.$route.params.symbol ? this.$route.params.symbol : 'BTCUSDT',
+        label: this.symbol,
       }]
     }
   },
@@ -164,11 +169,11 @@ export default {
   mounted() {
     this.dataFetch = this.fetchData().then(res => {
     
-      this.dataDay = res.dataDay.data.slice(res.dataDay.data.length - 7, res.dataDay.data.length)
-      this.data4H = res.data4H.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
-      this.data1H = res.data1H.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
-      this.data15M = res.data15M.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
-      this.data5M = res.data5M.data.slice(res.dataDay.data.length - 15, res.dataDay.data.length)
+      this.dataDay = res.dataDay.data.slice(-7)
+      this.data4H = res.data4H.data.slice(-15)
+      this.data1H = res.data1H.data.slice(-15)
+      this.data15M = res.data15M.data.slice(-15)
+      this.data5M = res.data5M.data.slice(-15)
       console.log(this.dataDay)
       
       this.chartData.labels = this.dataDay.map(ele => {
@@ -178,7 +183,7 @@ export default {
       this.chartData.datasets = [{
         data : this.dataDay.map(ele => ele[1]),
         backgroundColor: '#f87979',
-        label: this.$route.params.symbol ? this.$route.params.symbol : 'BTCUSDT',
+        label: this.symbol,
       }]
       console.log(this.chartData)
     })
