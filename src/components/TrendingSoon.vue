@@ -120,19 +120,19 @@ export default {
 
     async onDataChange(items) {
       let _firebaseData = [];
-      this.coins = await this.getTrendingSoon();
       items.forEach((item) => {
         let data = item.val();
         _firebaseData.push(data);
       });
-      this.coins.forEach((coin) => {
-        if (_firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1) {
-          console.log(coin);
-          TrendingSoon.create(coin);
-        }
-      });
+      // this.coins.forEach((coin) => {
+      //   if (_firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1) {
+      //     console.log(coin);
+      //     // TrendingSoon.create(coin);
+      //   }
+      // });
       console.log("_firebaseData:" + _firebaseData.length);
       this.firebaseData = _firebaseData;
+      await this.pushData();
     },
 
     compare(a, b) {
@@ -165,12 +165,14 @@ export default {
     },
 
     pushData() {
+      // console.log("this.firebaseData", this.firebaseData)
+      // console.log("this.coins", this.coins)
       this.coins.forEach((coin) => {
         if (
           this.firebaseData.findIndex((ele) => ele.symbol == coin.symbol) == -1
         ) {
-          console.log(coin);
-          // TrendingSoon.create(coin);
+          console.log("pushData", coin);
+          TrendingSoon.create(coin);
         }
       });
     },
@@ -258,9 +260,10 @@ export default {
     },
   },
   async mounted() {
+    this.coins = await this.getTrendingSoon();
     await TrendingSoon.getAll().on("value", this.onDataChange);
 
-    await this.pushData();
+    // await this.pushData();
     await this.axios
       .get("https://api.binance.com/api/v3/ticker/price")
       .then((response) => {

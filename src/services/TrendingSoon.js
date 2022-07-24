@@ -1,6 +1,7 @@
 import firebase from "../firebase";
 
-const db = firebase.ref("/TrendingSoon");
+// const db = firebase.ref("/TrendingSoon");
+const db = firebase.ref("/TrendingSoon1");
 
 class TrendingSoon {
   getAll() {

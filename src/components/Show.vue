@@ -169,7 +169,7 @@ export default {
   mounted() {
     this.dataFetch = this.fetchData().then(res => {
     
-      this.dataDay = res.dataDay.data.slice(-7)
+      this.dataDay = res.dataDay.data.slice(-14)
       this.data4H = res.data4H.data.slice(-15)
       this.data1H = res.data1H.data.slice(-15)
       this.data15M = res.data15M.data.slice(-15)
