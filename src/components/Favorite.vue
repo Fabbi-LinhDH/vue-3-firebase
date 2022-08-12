@@ -3,30 +3,14 @@
     SORT
   </button>
   <button type="button" class="btn btn-info mr-3" @click="sortOrigin()">
-    RANK
+    ORIGIN
   </button>
 
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('all')"
-  >
+  <button v-if="toggle == 'origin'" type="button" class="btn btn-primary mr-3" @click="changeAll()">
     ALL
   </button>
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('origin')"
-  >
+  <button v-else type="button" class="btn btn-primary mr-3" @click="changeOrigin()">
     Origin
-  </button>
-
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('favorite')"
-  >
-    Favorite
   </button>
 
   <!-- Modal -->
@@ -86,25 +70,10 @@
             >{{ getPrice(coin.symbol) }}</a
           >
           <span
-            role="button"
-            class="badge badge-success mr-2"
+            class="badge badge-success"
             @click="(show = true), (symbol = coin.symbol + 'USDT')"
             >show</span
           >
-          <i
-            v-if="checkFavorite(coin.symbol)"
-            role="button"
-            class="bi bi-bookmark-heart-fill red"
-            @click="unBookmarkCoin(coin)"
-          ></i>
-          <i
-            v-else
-            role="button"
-            class="bi bi-bookmark-heart"
-            @click="bookmarkCoin(coin)"
-          ></i>
-
-
           <!-- <router-link :to="{ name: 'show', params: { symbol: coin.symbol+'USDT' }}">show</router-link> -->
         </template>
       </p>
@@ -114,7 +83,6 @@
 
 <script>
 import TrendingSoon from "../services/TrendingSoon";
-import Favorite from "../services/Favorite";
 import Show from "./Show.vue";
 const TRADINGVIEW_URL =
   "https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A";
@@ -125,7 +93,6 @@ export default {
     return {
       coins: [],
       coinsOrigin: [],
-      coinsFavorite: [],
       currentTutorial: null,
       currentIndex: -1,
       toggleSort: true,
@@ -133,7 +100,7 @@ export default {
       binanceData: [],
       symbol: "",
       show: false,
-      toggle: "origin",
+      toggle: "origin"
     };
   },
   methods: {
@@ -163,10 +130,7 @@ export default {
     async onDataChange(items) {
       let _firebaseData = [];
       items.forEach((item) => {
-        let data = {
-          _key: item.key,
-          ...item.val()
-        }
+        let data = item.val();
         _firebaseData.push(data);
       });
       // this.coins.forEach((coin) => {
@@ -178,19 +142,6 @@ export default {
       console.log("_firebaseData:" + _firebaseData.length);
       this.firebaseData = _firebaseData;
       await this.pushData();
-    },
-
-    async onDataFavoriteChange(items) {
-      let _firebaseData = [];
-      if (items)
-        items.forEach((item) => {
-          let data = {
-            _key: item.key,
-            ...item.val()
-          }
-          _firebaseData.push(data);
-        });
-      this.coinsFavorite = _firebaseData;
     },
 
     compare(a, b) {
@@ -247,34 +198,13 @@ export default {
     sortOrigin() {
       this.coins = this.coins.sort(this.compareRank);
     },
-    changeDisplay(type) {
-      switch (type) {
-        case "all":
-          this.coins = this.firebaseData;
-          this.toggle = "all";
-          break;
-        case "origin":
-          this.coins = this.coinsOrigin;
-          this.toggle = "origin";
-          break;
-        case "favorite":
-          this.coins = this.coinsFavorite;
-          break;
-        default:
-          this.coins = this.firebaseData;
-          break;
-      }
+    changeAll() {
+      this.coins = this.firebaseData
+      this.toggle = 'all'
     },
-    bookmarkCoin(coin) {
-      Favorite.create(coin);
-    },
-    unBookmarkCoin(coin) {
-      console.log(coin)
-    },
-
-    checkFavorite(coin) {
-      let list = this.coinsFavorite.map(ele => ele.symbol)
-      return list.includes(coin)
+    changeOrigin() {
+      this.coins = this.coinsOrigin
+      this.toggle = 'origin'
     },
 
     isAvailableBinance(coinName) {
@@ -350,7 +280,6 @@ export default {
     this.coins = await this.getTrendingSoon();
     this.coinsOrigin = await this.getTrendingSoon();
     await TrendingSoon.getAll().on("value", this.onDataChange);
-    await Favorite.getAll().on("value", this.onDataFavoriteChange);
 
     // await this.pushData();
     await this.axios
@@ -361,7 +290,6 @@ export default {
   },
   beforeUnmount() {
     TrendingSoon.getAll().off("value", this.onDataChange);
-    Favorite.getAll().off("value", this.onDataFavoriteChange);
   },
 };
 </script>
@@ -383,8 +311,5 @@ export default {
 .modal-custom {
   max-width: 100% !important;
   width: 100% !important;
-}
-.red {
-  color: crimson;
 }
 </style>
