@@ -133,7 +133,7 @@ export default {
       binanceData: [],
       symbol: "",
       show: false,
-      toggle: "origin",
+      displayType: "origin",
     };
   },
   methods: {
@@ -251,14 +251,15 @@ export default {
       switch (type) {
         case "all":
           this.coins = this.firebaseData;
-          this.toggle = "all";
+          this.displayType = "all";
           break;
         case "origin":
           this.coins = this.coinsOrigin;
-          this.toggle = "origin";
+          this.displayType = "origin";
           break;
         case "favorite":
           this.coins = this.coinsFavorite;
+          this.displayType = "favorite";
           break;
         default:
           this.coins = this.firebaseData;
@@ -269,7 +270,14 @@ export default {
       Favorite.create(coin);
     },
     unBookmarkCoin(coin) {
-      console.log(coin)
+      let delCoinIdx = this.coinsFavorite.findIndex(ele => ele.symbol == coin.symbol)
+      console.log(delCoinIdx)
+      if (delCoinIdx > -1) {
+        Favorite.delete(this.coinsFavorite[delCoinIdx]._key)
+        this.coinsFavorite.slice(delCoinIdx)
+        if (this.displayType == 'favorite')
+          this.coins = this.coinsFavorite
+      }
     },
 
     checkFavorite(coin) {
