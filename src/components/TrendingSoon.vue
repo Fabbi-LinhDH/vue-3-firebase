@@ -1,33 +1,35 @@
 <template>
-  <button type="button" class="btn btn-primary mr-3" @click="sortData()">
-    SORT
-  </button>
-  <button type="button" class="btn btn-info mr-3" @click="sortOrigin()">
-    RANK
-  </button>
+  <div>
+    <button type="button" class="btn btn-primary mr-3" @click="sortData()">
+      SORT
+    </button>
+    <button type="button" class="btn btn-info mr-3" @click="sortOrigin()">
+      RANK
+    </button>
 
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('all')"
-  >
-    ALL
-  </button>
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('origin')"
-  >
-    Origin
-  </button>
+    <button
+      type="button"
+      class="btn btn-primary mr-3"
+      @click="changeDisplay('all')"
+    >
+      ALL
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary mr-3"
+      @click="changeDisplay('origin')"
+    >
+      Origin
+    </button>
 
-  <button
-    type="button"
-    class="btn btn-primary mr-3"
-    @click="changeDisplay('favorite')"
-  >
-    Favorite
-  </button>
+    <button
+      type="button"
+      class="btn btn-primary mr-3"
+      @click="changeDisplay('favorite')"
+    >
+      Favorite
+    </button>
+  </div>
 
   <!-- Modal -->
   <div
@@ -57,6 +59,14 @@
       </div>
     </div>
   </div>
+  <div class="form-group mt-2">
+    <input
+      class="form-control"
+      id="exampleInputEmail1"
+      placeholder="Search"
+      @input="searchCoin"
+    />
+  </div>
   <div class="list-group row">
     <span
       v-for="(coin, index) in coins"
@@ -68,9 +78,13 @@
         <h5 class="mb-1">
           <span class="mr-1">{{ coin.rank }}.</span>{{ coin.name }}
         </h5>
-        <small class="font-bold">{{
-          new Date(coin.discovered_on * 1000).toLocaleString("en-GB")
-        }}</small>
+        <small
+          @click="getSimilar(coin.discovered_on)"
+          class="font-bold"
+          >{{
+            new Date(coin.discovered_on * 1000).toLocaleString("en-GB")
+          }}</small
+        >
       </div>
       <p class="mb-1">
         <img :src="coin.logo_url" class="img-coin" />
@@ -104,23 +118,26 @@
             @click="bookmarkCoin(coin)"
           ></i>
 
-
           <!-- <router-link :to="{ name: 'show', params: { symbol: coin.symbol+'USDT' }}">show</router-link> -->
         </template>
       </p>
     </span>
   </div>
+  <Similar v-if="displaySimilar" @onHide="displaySimilar = false" />
 </template>
 
 <script>
 import TrendingSoon from "../services/TrendingSoon";
 import Favorite from "../services/Favorite";
 import Show from "./Show.vue";
+import Similar from "./Similar.vue";
+import debounce from "debounce";
+
 const TRADINGVIEW_URL =
   "https://www.tradingview.com/chart/ZGUryCxz/?symbol=BINANCE%3A";
 export default {
   name: "trending-soon",
-  components: { Show },
+  components: { Show, Similar },
   data() {
     return {
       coins: [],
@@ -134,9 +151,32 @@ export default {
       symbol: "",
       show: false,
       displayType: "origin",
+      displaySimilar: false,
     };
   },
+
   methods: {
+    getSimilar(time) {
+      let date = new Date(time * 1000);
+      let day = date.getDate();
+      let month = date.getMonth();
+      this.coins = this.firebaseData.filter((ele) => {
+        let eleDate = new Date(ele.discovered_on * 1000);
+        console.log(day, eleDate.getDate() )
+        return (
+          month == eleDate.getMonth() &&
+          day - 2 < eleDate.getDate() &&
+          eleDate.getDate() < day + 2
+        );
+      });
+    },
+    searchCoin: debounce(function (e) {
+      console.log("search: ", e.target.value);
+      this.coins = this.firebaseData.filter((ele) =>
+        ele.symbol.includes(e.target.value.toUpperCase())
+      );
+    }, 1000),
+
     copyText(text) {
       if (!navigator.clipboard) {
         const dummy = document.createElement("textarea");
@@ -165,8 +205,8 @@ export default {
       items.forEach((item) => {
         let data = {
           _key: item.key,
-          ...item.val()
-        }
+          ...item.val(),
+        };
         _firebaseData.push(data);
       });
       // this.coins.forEach((coin) => {
@@ -186,8 +226,8 @@ export default {
         items.forEach((item) => {
           let data = {
             _key: item.key,
-            ...item.val()
-          }
+            ...item.val(),
+          };
           _firebaseData.push(data);
         });
       this.coinsFavorite = _firebaseData;
@@ -270,19 +310,20 @@ export default {
       Favorite.create(coin);
     },
     unBookmarkCoin(coin) {
-      let delCoinIdx = this.coinsFavorite.findIndex(ele => ele.symbol == coin.symbol)
-      console.log(delCoinIdx)
+      let delCoinIdx = this.coinsFavorite.findIndex(
+        (ele) => ele.symbol == coin.symbol
+      );
+      console.log(delCoinIdx);
       if (delCoinIdx > -1) {
-        Favorite.delete(this.coinsFavorite[delCoinIdx]._key)
-        this.coinsFavorite.slice(delCoinIdx)
-        if (this.displayType == 'favorite')
-          this.coins = this.coinsFavorite
+        Favorite.delete(this.coinsFavorite[delCoinIdx]._key);
+        this.coinsFavorite.slice(delCoinIdx);
+        if (this.displayType == "favorite") this.coins = this.coinsFavorite;
       }
     },
 
     checkFavorite(coin) {
-      let list = this.coinsFavorite.map(ele => ele.symbol)
-      return list.includes(coin)
+      let list = this.coinsFavorite.map((ele) => ele.symbol);
+      return list.includes(coin);
     },
 
     isAvailableBinance(coinName) {
